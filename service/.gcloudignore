@@ -1,0 +1,24 @@
+# This file specifies files that should NOT be uploaded to Cloud Build
+#
+# If you open a git repo, the following files are excluded from the
+# context uploaded to Cloud Build (using gcloud builds submit / gcloud run deploy):
+# - .git directory
+# - .gitignore file
+# - .gcloudignore file (this file)
+# - .github directory
+# - .gitattributes
+# - .gitmodules
+# - Image files
+# - Credential files
+# - VCS metadata
+
+.git
+.gitignore
+.gcloudignore
+.github/
+../client/
+*.md
+.env
+.env.local
+*.pem
+*.key

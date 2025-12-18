@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from datetime import date
-from service.core.auth import get_current_user_id
-from service.db.streaks_repo import get_current_streak
+from core.auth import get_current_user_id
+from db.streaks_repo import get_current_streak
 
 router = APIRouter(prefix="/streaks", tags=["Streaks"])
 

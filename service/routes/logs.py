@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from datetime import date
-from service.models.logs import (
+from models.logs import (
     DailyLog,
     DailyLogPage,
     CreateDailyLogRequest,
     UpdateDailyLogRequest
 )
-from service.core.auth import get_current_user_id
-from service.db.logs_repo import list_logs, create_log, update_log
+from core.auth import get_current_user_id
+from db.logs_repo import list_logs, create_log, update_log
 
 router = APIRouter(prefix="/logs", tags=["Logs"])
 

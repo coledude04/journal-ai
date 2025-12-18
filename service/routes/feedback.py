@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
-from service.models.feedback import RequestFeedbackRequest, AIFeedback
-from service.core.auth import get_current_user_id
-from service.db.feedback_repo import request_feedback
+from models.feedback import RequestFeedbackRequest, AIFeedback
+from core.auth import get_current_user_id
+from db.feedback_repo import request_feedback
 
 router = APIRouter(prefix="/feedback", tags=["AI Feedback"])
 

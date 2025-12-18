@@ -1,8 +1,8 @@
 from datetime import datetime
 from google.cloud.firestore_v1 import Query
-from service.db.firestore import get_db
-from service.core.pagination import encode_page_token, decode_page_token
-from service.models.goals import Goal, GoalPage, GoalStatus
+from db.firestore import get_db
+from core.pagination import encode_page_token, decode_page_token
+from models.goals import Goal, GoalPage, GoalStatus
 
 COLLECTION = "goals"
 

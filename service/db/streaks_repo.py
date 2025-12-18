@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta
 from google.cloud.firestore_v1 import Query
-from service.db.firestore import get_db
-from service.db.logs_repo import COLLECTION as LOGS_COLLECTION
+from db.firestore import get_db
+from db.logs_repo import COLLECTION as LOGS_COLLECTION
 
 def get_current_streak(user_id: str) -> dict:
     """

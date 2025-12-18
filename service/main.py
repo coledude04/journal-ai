@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from service.routes import logs, goals, feedback, streaks
+from routes import logs, goals, feedback, streaks
 
 app = FastAPI(
     title="Daily Reflection API",

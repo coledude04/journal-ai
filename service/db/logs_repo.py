@@ -1,8 +1,8 @@
 from datetime import datetime
 from google.cloud.firestore_v1 import Query
-from service.db.firestore import get_db
-from service.core.pagination import encode_page_token, decode_page_token
-from service.models.logs import DailyLog, DailyLogPage
+from db.firestore import get_db
+from core.pagination import encode_page_token, decode_page_token
+from models.logs import DailyLog, DailyLogPage
 
 COLLECTION = "logs"
 

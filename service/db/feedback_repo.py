@@ -1,7 +1,7 @@
 from datetime import datetime
-from service.db.firestore import get_db
-from service.models.feedback import AIFeedback
-from service.db.logs_repo import COLLECTION as LOGS_COLLECTION
+from db.firestore import get_db
+from models.feedback import AIFeedback
+from db.logs_repo import COLLECTION as LOGS_COLLECTION
 
 COLLECTION = "feedback"
 MODEL_VERSION = "1.0.0"

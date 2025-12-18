@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, Query, status, HTTPException
-from service.models.goals import (
+from models.goals import (
     Goal,
     GoalPage,
     CreateGoalRequest,
     UpdateGoalRequest,
     GoalStatus
 )
-from service.core.auth import get_current_user_id
-from service.db.goals_repo import list_goals, create_goal, update_goal, delete_goal, complete_goal
+from core.auth import get_current_user_id
+from db.goals_repo import list_goals, create_goal, update_goal, delete_goal, complete_goal
 
 router = APIRouter(prefix="/goals", tags=["Goals"])
 
