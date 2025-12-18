@@ -1,0 +1,380 @@
+openapi: 3.0.3
+info:
+  title: Daily Reflection & AI Feedback API
+  description: |
+    Backend API for the Daily Reflection mobile app.
+    
+    **Pagination Update:** - Lists (`/logs`, `/goals`) now use cursor-based pagination.
+    - Responses return an object containing `items` and a `nextPageToken`.
+  version: 1.1.0
+servers:
+  - url: https://api.dailyreflection.app/v1
+    description: Production Server
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ------------------------------
+  # DAILY LOGS
+  # ------------------------------
+  /logs:
+    get:
+      summary: Fetch daily logs history (Paginated)
+      description: |
+        Retrieve a list of past logs. 
+        Use `pageToken` to fetch the next set of results.
+      tags:
+        - Logs
+      parameters:
+        - in: query
+          name: startDate
+          schema:
+            type: string
+            format: date
+          description: Filter logs after this date (inclusive).
+        - in: query
+          name: endDate
+          schema:
+            type: string
+            format: date
+          description: Filter logs before this date (inclusive).
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+          description: Max number of logs to return.
+        - in: query
+          name: pageToken
+          schema:
+            type: string
+          description: The token returned from a previous request to fetch the next page.
+      responses:
+        '200':
+          description: A page of daily logs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DailyLog'
+                  nextPageToken:
+                    type: string
+                    nullable: true
+                    description: Pass this token into the next request to get more results. If null, end of list.
+    
+    post:
+      summary: Create a daily log
+      tags:
+        - Logs
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+                - date
+              properties:
+                date:
+                  type: string
+                  format: date
+                content:
+                  type: string
+      responses:
+        '201':
+          description: Log created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyLog'
+        '400':
+          description: Outside allowed time window.
+        '409':
+          description: Log already exists for this date.
+
+  /logs/{logId}:
+    put:
+      summary: Edit an existing log
+      tags:
+        - Logs
+      parameters:
+        - in: path
+          name: logId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - content
+              properties:
+                content:
+                  type: string
+      responses:
+        '200':
+          description: Log updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailyLog'
+
+  # ------------------------------
+  # GOALS
+  # ------------------------------
+  /goals:
+    get:
+      summary: Fetch goals (Paginated)
+      description: Retrieve user goals, optionally filtered by status.
+      tags:
+        - Goals
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [in_progress, completed, all]
+            default: in_progress
+          description: Filter by goal status.
+        - in: query
+          name: pageSize
+          schema:
+            type: integer
+            default: 20
+        - in: query
+          name: pageToken
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A page of goals
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Goal'
+                  nextPageToken:
+                    type: string
+                    nullable: true
+
+    post:
+      summary: Create a new goal
+      tags:
+        - Goals
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - text
+              properties:
+                text:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Goal created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Goal'
+
+  /goals/{goalId}:
+    put:
+      summary: Update a goal
+      tags:
+        - Goals
+      parameters:
+        - in: path
+          name: goalId
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Goal updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Goal'
+    
+    delete:
+      summary: Delete a goal
+      tags:
+        - Goals
+      parameters:
+        - in: path
+          name: goalId
+          schema:
+            type: string
+          required: true
+      responses:
+        '204':
+          description: Goal deleted successfully
+
+  /goals/{goalId}/complete:
+    post:
+      summary: Mark goal as completed
+      tags:
+        - Goals
+      parameters:
+        - in: path
+          name: goalId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Goal marked completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Goal'
+
+  # ------------------------------
+  # AI FEEDBACK
+  # ------------------------------
+  /feedback/request:
+    post:
+      summary: Request AI Feedback
+      tags:
+        - AI Feedback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - logId
+              properties:
+                logId:
+                  type: string
+      responses:
+        '200':
+          description: Feedback generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIFeedback'
+        '402':
+          description: Payment Required (Free Tier)
+
+  # ------------------------------
+  # STREAKS
+  # ------------------------------
+  /streaks/current:
+    get:
+      summary: Get current streak status
+      tags:
+        - Streaks
+      responses:
+        '200':
+          description: Streak status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  currentStreak:
+                    type: integer
+                  lastLogDate:
+                    type: string
+                    format: date
+                    nullable: true
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    DailyLog:
+      type: object
+      properties:
+        logId:
+          type: string
+        userId:
+          type: string
+        date:
+          type: string
+          format: date
+        content:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+        aiFeedbackGenerated:
+          type: boolean
+
+    Goal:
+      type: object
+      properties:
+        goalId:
+          type: string
+        userId:
+          type: string
+        text:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [in_progress, completed]
+        createdAt:
+          type: string
+          format: date-time
+
+    AIFeedback:
+      type: object
+      properties:
+        feedbackId:
+          type: string
+        logId:
+          type: string
+        content:
+          type: string
+        modelVersion:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
