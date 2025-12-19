@@ -7,6 +7,7 @@ from models.goals import (
     GoalStatus
 )
 from core.auth import get_current_user_id
+from core.rate_limiter import check_rate_limit
 from db.goals_repo import list_goals, create_goal, update_goal, delete_goal, complete_goal
 
 router = APIRouter(prefix="/goals", tags=["Goals"])
@@ -19,6 +20,7 @@ def get_goals_handler(
     pageToken: str | None = None,
     user_id: str = Depends(get_current_user_id),
 ):
+    check_rate_limit(user_id=user_id)
     try:
         return list_goals(
             user_id=user_id,
@@ -35,6 +37,7 @@ def create_goal_handler(
     payload: CreateGoalRequest,
     user_id: str = Depends(get_current_user_id),
 ):
+    check_rate_limit(user_id=user_id)
     try:
         return create_goal(
             user_id=user_id,
@@ -51,6 +54,7 @@ def update_goal_handler(
     payload: UpdateGoalRequest,
     user_id: str = Depends(get_current_user_id),
 ):
+    check_rate_limit(user_id=user_id)
     try:
         return update_goal(
             user_id=user_id,
@@ -69,6 +73,7 @@ def delete_goal_handler(
     goalId: str,
     user_id: str = Depends(get_current_user_id),
 ):
+    check_rate_limit(user_id=user_id)
     try:
         delete_goal(user_id=user_id, goal_id=goalId)
         return None
@@ -83,6 +88,7 @@ def complete_goal_handler(
     goalId: str,
     user_id: str = Depends(get_current_user_id),
 ):
+    check_rate_limit(user_id=user_id)
     try:
         return complete_goal(user_id=user_id, goal_id=goalId)
     except ValueError as e:

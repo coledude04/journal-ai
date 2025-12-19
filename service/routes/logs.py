@@ -7,7 +7,9 @@ from models.logs import (
     UpdateDailyLogRequest
 )
 from core.auth import get_current_user_id
+from core.rate_limiter import check_rate_limit
 from db.logs_repo import list_logs, create_log, update_log
+from db.streaks_repo import update_user_streak
 
 router = APIRouter(prefix="/logs", tags=["Logs"])
 
@@ -20,6 +22,7 @@ def get_logs_handler(
     pageToken: str | None = None,
     user_id: str = Depends(get_current_user_id),
 ):
+    check_rate_limit(user_id=user_id)
     try:
         return list_logs(
             user_id=user_id,
@@ -37,12 +40,23 @@ def create_log_handler(
     payload: CreateDailyLogRequest,
     user_id: str = Depends(get_current_user_id),
 ):
+    check_rate_limit(user_id=user_id)
     try:
-        return create_log(
+        log = create_log(
             user_id=user_id,
             date=payload.date,
             content=payload.content,
         )
+        
+        # Update user streak (default to America/Chicago if timezone not provided)
+        timezone = getattr(payload, "timezone", "America/Chicago")
+        try:
+            update_user_streak(user_id=user_id, timezone=timezone, log_date=payload.date)
+        except Exception as e:
+            # Streak update failure shouldn't fail the log creation
+            print(f"Warning: Failed to update streak: {e}")
+        
+        return log
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -53,6 +67,7 @@ def update_log_handler(
     payload: UpdateDailyLogRequest,
     user_id: str = Depends(get_current_user_id),
 ):
+    check_rate_limit(user_id=user_id)
     try:
         return update_log(
             user_id=user_id,

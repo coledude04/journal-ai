@@ -1,16 +1,17 @@
 from fastapi import APIRouter, Depends
-from datetime import date
 from core.auth import get_current_user_id
-from db.streaks_repo import get_current_streak
+from core.rate_limiter import check_rate_limit
+from db.streaks_repo import get_streak
 
 router = APIRouter(prefix="/streaks", tags=["Streaks"])
 
 
-@router.get("/current")
-def get_current_streak_handler(
+@router.get("")
+def get_streak_handler(
     user_id: str = Depends(get_current_user_id),
 ):
     """
-    Get the current streak of consecutive daily logs.
+    Get the user's current and longest streak.
     """
-    return get_current_streak(user_id)
+    check_rate_limit(user_id=user_id)
+    return get_streak(user_id)

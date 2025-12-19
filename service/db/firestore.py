@@ -12,7 +12,4 @@ def get_db() -> Any:
     return _db
 
 def get_db_name() -> str:
-    if ENV == "prod":
-        return "ai-journal-prod"
-    else:
-        return "ai-journal-dev"
+    return os.getenv("FIRESTORE_DB_NAME", "ai-journal-dev")

@@ -51,8 +51,14 @@ def request_feedback(user_id: str, log_id: str) -> AIFeedback:
     """
     Request AI feedback for a log.
     Validates log ownership, generates feedback, and stores it.
+    Returns existing feedback if already generated for this log.
     """
     db = get_db()
+    
+    # Check if feedback already exists
+    existing_feedback = get_feedback(user_id=user_id, log_id=log_id)
+    if existing_feedback:
+        return existing_feedback
     
     # Verify log exists and belongs to user
     log_doc = db.collection(LOGS_COLLECTION).document(log_id).get()

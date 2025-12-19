@@ -87,6 +87,10 @@ paths:
                   format: date
                 content:
                   type: string
+                timezone:
+                  type: string
+                  default: UTC
+                  description: IANA timezone string (e.g., America/Chicago, Europe/London). Used for streak calculation.
       responses:
         '201':
           description: Log created

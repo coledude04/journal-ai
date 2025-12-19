@@ -14,6 +14,7 @@ class DailyLog(BaseModel):
 class CreateDailyLogRequest(BaseModel):
     date: date
     content: str
+    timezone: str = "America/Chicago"  # User's timezone for streak calculation
 
 
 class UpdateDailyLogRequest(BaseModel):

@@ -10,7 +10,7 @@ def list_logs(
     user_id: str,
     start_date=None,
     end_date=None,
-    page_size: int = 20,
+    page_size: int = 31,
     page_token: str | None = None,
 ) -> DailyLogPage:
     db = get_db()
@@ -59,12 +59,15 @@ def list_logs(
 
 def create_log(user_id: str, date, content: str) -> DailyLog:
     db = get_db()
+    
+    # Convert date to ISO format string (YYYY-MM-DD only)
+    date_str = date.isoformat() if hasattr(date, 'isoformat') else date
 
     # Enforce one log per day
     existing = (
         db.collection(COLLECTION)
         .where("userId", "==", user_id)
-        .where("date", "==", date.isoformat())
+        .where("date", "==", date_str)
         .limit(1)
         .stream()
     )
@@ -76,7 +79,7 @@ def create_log(user_id: str, date, content: str) -> DailyLog:
 
     doc = {
         "userId": user_id,
-        "date": date.isoformat(),
+        "date": date_str,
         "content": content,
         "createdAt": now,
         "updatedAt": now,
