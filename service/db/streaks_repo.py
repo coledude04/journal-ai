@@ -97,22 +97,20 @@ def update_user_streak(user_id: str, timezone: str, log_date: date) -> dict:
         if not snap.exists:
             # Create new user document
             user_data = {
-                "timezone": timezone,
                 "current_streak": 1,
                 "longest_streak": 1,
                 "last_completed_date": log_date.isoformat(),
+                "timezone": timezone,
+                "plan": "free",
+                "subscription_expires_at": None,
+                "last_revenuecat_sync": None
             }
         else:
             user_data = snap.to_dict()
             user_data = update_streak(transaction, user_ref, user_data, log_date)
         
         # Set document (creates if doesn't exist, updates if exists)
-        transaction.set(user_ref, {
-            "current_streak": user_data["current_streak"],
-            "longest_streak": user_data["longest_streak"],
-            "last_completed_date": user_data["last_completed_date"],
-            "timezone": timezone,
-        }, merge=True)
+        transaction.set(user_ref, user_data, merge=True)
         
         return user_data
     

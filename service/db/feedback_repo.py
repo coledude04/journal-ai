@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from db.firestore import get_db
 from models.feedback import AIFeedback
 from models.logs import DailyLog
@@ -37,7 +37,7 @@ def create_feedback(
     db = get_db()
     
     ref = db.collection(COLLECTION).document()
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     
     doc = {
         "userId": user_id,
@@ -74,8 +74,7 @@ def request_feedback(user_id: str, log_id: str) -> AIFeedback:
     if cur_log_data.get("userId") != user_id:
         raise ValueError("Unauthorized")
     
-    # TODO: Implement free-tier limits check
-    # Call LLM to generate feedback (for now, using placeholder)
+    # Generate feedback
     recent_logs = list_logs(user_id=user_id, page_size=3).items
     goals = list_goals(user_id=user_id, status="in_progress").items
     input_text = generate_input(current_log=DailyLog(logId=log_id, **cur_log_data), prev_logs=recent_logs[1:], goals=goals)

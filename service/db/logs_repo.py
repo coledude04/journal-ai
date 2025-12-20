@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from google.cloud.firestore_v1 import Query
 from google.cloud.firestore_v1.vector import Vector
 from db.firestore import get_db
+from db.user_repo import get_user
 from core.pagination import encode_page_token, decode_page_token
 from models.logs import DailyLog, DailyLogPage
 from services.embedding_service import generate_embedding
@@ -78,7 +79,7 @@ def create_log(user_id: str, date, content: str) -> DailyLog:
     if next(existing, None):
         raise ValueError("Log already exists")
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     ref = db.collection(COLLECTION).document()
 
     doc = {
@@ -92,11 +93,12 @@ def create_log(user_id: str, date, content: str) -> DailyLog:
 
     ref.set(doc)
 
-    # Embed the log content
-    try:
-        embed_log(db, user_id, ref.id, content, date_str)
-    except Exception as e:
-        print(f"Failed to embed log: {e}")
+    user = get_user(user_id=user_id)
+    if user.plan == "paid":
+        try:
+            embed_log(db, user_id, ref.id, content, date_str)
+        except Exception as e:
+            print(f"Failed to embed log: {e}")
 
     return DailyLog(logId=ref.id, **doc)
 
@@ -113,7 +115,7 @@ def update_log(user_id: str, log_id: str, content: str) -> DailyLog:
     if data.get("userId") != user_id:
         raise ValueError("Unauthorized")
     
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     updates = {
         "content": content,
         "updatedAt": now,

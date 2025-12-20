@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from google.cloud.firestore_v1 import Query
 from db.firestore import get_db
 from core.pagination import encode_page_token, decode_page_token
@@ -64,7 +64,7 @@ def create_goal(
         "text": text,
         "tags": tags,
         "status": GoalStatus.in_progress,
-        "createdAt": datetime.utcnow(),
+        "createdAt": datetime.now(timezone.utc),
     }
 
     ref.set(doc)

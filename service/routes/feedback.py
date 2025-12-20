@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
 from models.feedback import RequestFeedbackRequest, AIFeedback
-from core.auth import get_current_user_id
-from db.feedback_repo import request_feedback, get_feedback
+from core.auth import get_current_user_id, require_feedback_access
 from core.rate_limiter import check_rate_limit
+from db.feedback_repo import request_feedback, get_feedback
+from db.user_repo import get_user
 
 router = APIRouter(prefix="/feedback", tags=["AI Feedback"])
 
@@ -16,6 +17,9 @@ def request_feedback_handler(
     Request AI feedback for a daily log.
     """
     check_rate_limit(user_id=user_id, key="request_feedback")
+    user = get_user(user_id=user_id)
+    require_feedback_access(user)
+    
     try:
         return request_feedback(user_id=user_id, log_id=payload.logId)
     except ValueError as e:
