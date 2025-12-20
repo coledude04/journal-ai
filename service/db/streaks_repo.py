@@ -102,6 +102,7 @@ def update_user_streak(user_id: str, timezone: str, log_date: date) -> dict:
                 "last_completed_date": log_date.isoformat(),
                 "timezone": timezone,
                 "plan": "free",
+                "subscription_status": "none",
                 "subscription_expires_at": None,
                 "last_revenuecat_sync": None
             }

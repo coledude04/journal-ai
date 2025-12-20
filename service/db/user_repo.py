@@ -24,6 +24,7 @@ def initialize_user(user_id: str) -> User:
         "longest_streak": 0,
         "last_completed_date": None,
         "plan": "free",
+        "subscription_status": "none",
         "subscription_expires_at": None,
         "last_revenuecat_sync": None
     }

@@ -24,5 +24,10 @@ def require_feedback_access(user: User):
     if user.plan != "paid":
         raise HTTPException(402, "Upgrade required")
 
-    if not user.subscription_expires_at or user.subscription_expires_at < datetime.now(timezone.utc):
+    now = datetime.now(timezone.utc)
+    if not user.subscription_expires_at or user.subscription_expires_at < now:
         raise HTTPException(402, "Subscription expired")
+    
+    allowed_statuses = {"active", "cancelled"}
+    if user.subscription_status not in allowed_statuses:
+        raise HTTPException(402, "Subscription inactive")
