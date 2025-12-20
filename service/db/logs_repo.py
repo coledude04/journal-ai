@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from typing import Any
 from google.cloud.firestore_v1 import Query
 from google.cloud.firestore_v1.vector import Vector
@@ -62,11 +62,10 @@ def list_logs(
     return DailyLogPage(items=items, nextPageToken=next_token)
 
 
-def create_log(user_id: str, date, content: str) -> DailyLog:
+def create_log(user_id: str, date: date, content: str) -> DailyLog:
     db = get_db()
     
-    # Convert date to ISO format string (YYYY-MM-DD only)
-    date_str = date.isoformat() if hasattr(date, 'isoformat') else date
+    date_str = str(date)
 
     # Enforce one log per day
     existing = (
