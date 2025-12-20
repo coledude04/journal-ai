@@ -1,10 +1,15 @@
+import os
 from datetime import datetime
 from db.firestore import get_db
 from models.feedback import AIFeedback
+from models.logs import DailyLog
 from db.logs_repo import COLLECTION as LOGS_COLLECTION
+from db.logs_repo import list_logs
+from db.goals_repo import list_goals
+from services.gemini_service import generate_response
+from core.prompts import generate_input
 
 COLLECTION = "feedback"
-MODEL_VERSION = "1.0.0"
 
 def get_feedback(user_id: str, log_id: str) -> AIFeedback | None:
     """Get feedback for a specific log"""
@@ -38,7 +43,7 @@ def create_feedback(
         "userId": user_id,
         "logId": log_id,
         "content": content,
-        "modelVersion": MODEL_VERSION,
+        "modelVersion": os.getenv("LLM_MODEL", "gemini-2.5-flash-lite"),
         "createdAt": now,
     }
     
@@ -61,21 +66,32 @@ def request_feedback(user_id: str, log_id: str) -> AIFeedback:
         return existing_feedback
     
     # Verify log exists and belongs to user
-    log_doc = db.collection(LOGS_COLLECTION).document(log_id).get()
-    if not log_doc.exists:
+    cur_log_doc = db.collection(LOGS_COLLECTION).document(log_id).get()
+    if not cur_log_doc.exists:
         raise ValueError("Log not found")
-    
-    log_data = log_doc.to_dict()
-    if log_data.get("userId") != user_id:
+
+    cur_log_data = cur_log_doc.to_dict()
+    if cur_log_data.get("userId") != user_id:
         raise ValueError("Unauthorized")
     
     # TODO: Implement free-tier limits check
-    # TODO: Call LLM to generate feedback (for now, using placeholder)
+    # Call LLM to generate feedback (for now, using placeholder)
+    recent_logs = list_logs(user_id=user_id, page_size=3).items
+    goals = list_goals(user_id=user_id, status="in_progress").items
+    input_text = generate_input(current_log=DailyLog(logId=log_id, **cur_log_data), prev_logs=recent_logs[1:], goals=goals)
+
+    print(f"Input text for feedback generation: {input_text}")
+    feedback_content = generate_response(user_id=user_id, input_text=input_text)
+    if not feedback_content:
+        raise Exception("Failed to generate feedback")
     
-    feedback_content = f"Feedback for your log: {log_data.get('content', '')[:50]}..."
-    
-    return create_feedback(
+    feedback = create_feedback(
         user_id=user_id,
         log_id=log_id,
         content=feedback_content,
     )
+
+    # Update log with aiFeedbackGenerated = True
+    db.collection(LOGS_COLLECTION).document(log_id).update({"aiFeedbackGenerated": True})
+
+    return feedback

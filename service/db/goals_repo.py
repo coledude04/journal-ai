@@ -8,9 +8,9 @@ COLLECTION = "goals"
 
 def list_goals(
     user_id: str,
-    status: str,
-    page_size: int,
-    page_token: str | None,
+    status: str = "all",
+    page_size: int = 10,
+    page_token: str | None = None,
 ) -> GoalPage:
     db = get_db()
     query = (

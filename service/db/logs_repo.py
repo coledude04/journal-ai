@@ -1,10 +1,14 @@
 from datetime import datetime
+from typing import Any
 from google.cloud.firestore_v1 import Query
+from google.cloud.firestore_v1.vector import Vector
 from db.firestore import get_db
 from core.pagination import encode_page_token, decode_page_token
 from models.logs import DailyLog, DailyLogPage
+from services.embedding_service import generate_embedding
 
 COLLECTION = "logs"
+EMBEDDING_COLLECTION = "log_embeddings"
 
 def list_logs(
     user_id: str,
@@ -88,6 +92,12 @@ def create_log(user_id: str, date, content: str) -> DailyLog:
 
     ref.set(doc)
 
+    # Embed the log content
+    try:
+        embed_log(db, user_id, ref.id, content, date_str)
+    except Exception as e:
+        print(f"Failed to embed log: {e}")
+
     return DailyLog(logId=ref.id, **doc)
 
 
@@ -113,3 +123,19 @@ def update_log(user_id: str, log_id: str, content: str) -> DailyLog:
     data.update(updates)
     
     return DailyLog(logId=log_id, **data)
+
+
+def embed_log(db: Any, user_id: str, log_id: str, log_content: str, date: str) -> None:
+    print(f"Embedding log {log_id} for user {user_id}")
+
+    log_embedding = generate_embedding(log_content)
+    db.collection(EMBEDDING_COLLECTION).document(log_id).set({
+        "userId": user_id,
+        "embedding": Vector(log_embedding),
+        "content": log_content,
+        "date": date,
+    })
+
+
+def validate_date(date: str, timezone: str) -> bool:
+    return True

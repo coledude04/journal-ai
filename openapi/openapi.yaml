@@ -295,6 +295,26 @@ paths:
                 $ref: '#/components/schemas/AIFeedback'
         '402':
           description: Payment Required (Free Tier)
+  /feedback/{logId}:
+    get:
+      summary: Get AI Feedback
+      tags:
+        - AI Feedback
+      parameters:
+        - in: path
+          name: logId
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Feedback details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIFeedback'
+        '404':
+          description: Feedback not found
 
   # ------------------------------
   # STREAKS

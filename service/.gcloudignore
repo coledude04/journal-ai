@@ -11,6 +11,7 @@
 # - Image files
 # - Credential files
 # - VCS metadata
+# - pycache
 
 .git
 .gitignore
@@ -22,3 +23,4 @@
 .env.local
 *.pem
 *.key
+__pycache__/
