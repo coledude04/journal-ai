@@ -18,16 +18,12 @@ def get_user(user_id: str) -> User:
 def initialize_user(user_id: str) -> User:
     """Initialize a new user"""
     db = get_db()
-    user_data = {
-        "timezone": "America/Chicago",
-        "current_streak": 0,
-        "longest_streak": 0,
-        "last_completed_date": None,
-        "plan": "free",
-        "subscription_status": "none",
-        "subscription_expires_at": None,
-        "last_revenuecat_sync": None
-    }
+    new_user = User(userId=user_id)
 
-    db.collection(COLLECTION).document(user_id).set(user_data)
-    return User(userId=user_id, **user_data)
+    db.collection(COLLECTION).document(user_id).set(new_user.to_dict_firestore())
+    return new_user
+
+
+def update_user(user: User) -> None:
+    db = get_db()
+    db.collection(COLLECTION).document(user.userId).update(user.to_dict_firestore())

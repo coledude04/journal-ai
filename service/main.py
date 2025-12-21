@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from routes import logs, goals, feedback, streaks
+from routes import logs, goals, feedback, streaks, chat
 
 app = FastAPI(
     title="Daily Reflection API",
@@ -10,3 +10,4 @@ app.include_router(logs.router)
 app.include_router(goals.router)
 app.include_router(feedback.router)
 app.include_router(streaks.router)
+app.include_router(chat.router)

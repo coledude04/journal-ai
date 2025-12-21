@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 from google.cloud.firestore import transactional
 from db.firestore import get_db
+from models.user import User
 
 COLLECTION = "users"
 
@@ -88,17 +89,10 @@ def update_user_streak(user_id: str, timezone: str, log_date: date) -> dict:
         snap = user_ref.get(transaction=transaction)
         
         if not snap.exists:
-            # Create new user document
-            user_data = {
-                "current_streak": 1,
-                "longest_streak": 1,
-                "last_completed_date": log_date.isoformat(),
-                "timezone": timezone,
-                "plan": "free",
-                "subscription_status": "none",
-                "subscription_expires_at": None,
-                "last_revenuecat_sync": None
-            }
+            # New user
+            new_user = User(userId=user_id, timezone=timezone, current_streak=1, longest_streak=1, last_completed_date=log_date)
+            user_data = new_user.to_dict_firestore()
+            
         else:
             user_data = snap.to_dict()
             user_data["timezone"] = timezone

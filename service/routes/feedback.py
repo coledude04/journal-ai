@@ -3,7 +3,7 @@ from models.feedback import RequestFeedbackRequest, AIFeedback
 from core.auth import get_current_user_id, require_feedback_access
 from core.rate_limiter import check_rate_limit
 from db.feedback_repo import request_feedback, get_feedback
-from db.user_repo import get_user
+from service.models.user import User
 
 router = APIRouter(prefix="/feedback", tags=["AI Feedback"])
 
@@ -11,17 +11,15 @@ router = APIRouter(prefix="/feedback", tags=["AI Feedback"])
 @router.post("/request", response_model=AIFeedback)
 def request_feedback_handler(
     payload: RequestFeedbackRequest,
-    user_id: str = Depends(get_current_user_id),
+    user: User = Depends(require_feedback_access),
 ):
     """
     Request AI feedback for a daily log.
     """
-    check_rate_limit(user_id=user_id, key="request_feedback")
-    user = get_user(user_id=user_id)
-    require_feedback_access(user)
-    
+    check_rate_limit(user_id=user.userId, key="request_feedback")
+
     try:
-        return request_feedback(user_id=user_id, log_id=payload.logId)
+        return request_feedback(user_id=user.userId, log_id=payload.logId)
     except ValueError as e:
         if "Unauthorized" in str(e):
             raise HTTPException(status_code=403, detail=str(e))
