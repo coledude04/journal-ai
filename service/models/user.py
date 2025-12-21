@@ -16,4 +16,4 @@ class User(BaseModel):
     subscription_status: Literal["active", "canceled", "expired", "none"]
     subscription_expires_at: datetime | None
 
-    last_revenuecat_sync: datetime
+    last_revenuecat_sync: datetime | None
