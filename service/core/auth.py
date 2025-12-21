@@ -20,8 +20,12 @@ def get_current_user_id(
             detail="Invalid or expired token",
         )
     
+def get_current_user(user_id: str = Depends(get_current_user_id)) -> User:
+    user = get_user(user_id)
+    return user
+    
 
-def require_feedback_access(user: User = Depends(get_user)) -> User:
+def require_feedback_access(user: User = Depends(get_current_user)) -> User:
     if user.plan != "paid":
         raise HTTPException(402, "Upgrade required")
 
@@ -36,7 +40,7 @@ def require_feedback_access(user: User = Depends(get_user)) -> User:
     return user
     
 
-def require_chat_tokens(user: User = Depends(get_user)) -> User:
+def require_chat_tokens(user: User = Depends(get_current_user)) -> User:
     if user.chatTokens <= 0:
         raise HTTPException(402, "No tokens available")
     

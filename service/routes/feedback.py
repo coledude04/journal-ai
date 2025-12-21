@@ -3,7 +3,7 @@ from models.feedback import RequestFeedbackRequest, AIFeedback
 from core.auth import get_current_user_id, require_feedback_access
 from core.rate_limiter import check_rate_limit
 from db.feedback_repo import request_feedback, get_feedback
-from service.models.user import User
+from models.user import User
 
 router = APIRouter(prefix="/feedback", tags=["AI Feedback"])
 

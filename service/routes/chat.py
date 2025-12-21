@@ -14,7 +14,7 @@ from db.chat_repo import (
     add_message,
     list_chats,
 )
-from service.models.user import User
+from models.user import User
 
 router = APIRouter(prefix="/chats", tags=["Chat"])
 

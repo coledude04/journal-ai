@@ -30,5 +30,6 @@ class User(BaseModel):
             "plan": self.plan,
             "subscription_status": self.subscription_status,
             "subscription_expires_at": self.subscription_expires_at,
+            "chatTokens": self.chatTokens,
             "last_revenuecat_sync": self.last_revenuecat_sync
         }
