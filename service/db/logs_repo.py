@@ -62,7 +62,7 @@ def list_logs(
     return DailyLogPage(items=items, nextPageToken=next_token)
 
 
-def create_log(user_id: str, date: date, content: str) -> DailyLog:
+def create_log(user_id: str, date: date, content: str, user_timezone: str) -> DailyLog:
     db = get_db()
     
     date_str = str(date)
@@ -85,6 +85,7 @@ def create_log(user_id: str, date: date, content: str) -> DailyLog:
         "userId": user_id,
         "date": date_str,
         "content": content,
+        "timezone": user_timezone,
         "createdAt": now,
         "updatedAt": now,
         "aiFeedbackGenerated": False,

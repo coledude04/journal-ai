@@ -1,15 +1,8 @@
-from datetime import date, datetime, timedelta
-from zoneinfo import ZoneInfo
+from datetime import date, timedelta
 from google.cloud.firestore import transactional
 from db.firestore import get_db
 
 COLLECTION = "users"
-
-
-def today_str(tz: str) -> str:
-    """Get today's date in the user's timezone as YYYY-MM-DD string"""
-    return datetime.now(ZoneInfo(tz)).strftime("%Y-%m-%d")
-
 
 def date_from_str(s: str) -> date:
     """Convert ISO format date string to date object"""
@@ -108,6 +101,7 @@ def update_user_streak(user_id: str, timezone: str, log_date: date) -> dict:
             }
         else:
             user_data = snap.to_dict()
+            user_data["timezone"] = timezone
             user_data = update_streak(transaction, user_ref, user_data, log_date)
         
         # Set document (creates if doesn't exist, updates if exists)

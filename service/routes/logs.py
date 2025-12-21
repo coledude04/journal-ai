@@ -46,6 +46,7 @@ def create_log_handler(
             user_id=user_id,
             date=payload.date,
             content=payload.content,
+            user_timezone=payload.timezone,
         )
         
         # Update user streak (default to America/Chicago if timezone not provided)
