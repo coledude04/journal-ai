@@ -7,7 +7,7 @@ class DailyLog(BaseModel):
     userId: str
     date: date
     content: str
-    timezone: str
+    timezone: str = "America/Chicago"
     createdAt: datetime
     updatedAt: datetime | None = None
     aiFeedbackGenerated: bool = False

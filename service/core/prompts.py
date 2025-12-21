@@ -10,6 +10,16 @@ LLM_SYSTEM_INSTRUCTIONS = (
     "Use this tool to find relevant logs that can help you provide more context and personalized feedback.\n"
 )
 
+CHAT_LLM_SYSTEM_INSTRUCTIONS = (
+    "You are an assistant designed to chat with a user about their daily logs and goals.\n"
+    "The conversation may or may not begin with feedback you provided on one of their logs.\n"
+    "You have access to the following tools:\n"
+    "1. `get_logs` - This function retrieves a list of past logs from the user. Pass a simple natural language query and the function will return a list of relevant logs. "
+    "Use this tool to find relevant logs that can help you provide more context and personalized responses.\n"
+    "2. `get_log_by_date` - This function retrieves a log by its date. Pass the date formatted as 'YYYY-MM-DD'.\n"
+    "3. `get_goals` - This function retrieves a list of the user's goals.\n"
+)
+
 def generate_input(current_log: DailyLog, prev_logs: list[DailyLog], goals: list[Goal]) -> str:
     input_text = f"New Log:\nDate: {current_log.date}\n{current_log.content}\n\n"
     input_text += "Previous Logs:\n"

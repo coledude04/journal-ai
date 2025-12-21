@@ -6,6 +6,7 @@ from models.chat import Chat, ChatMessage, ChatSummary, ChatPage
 
 COLLECTION = "chats"
 MESSAGES_SUBCOLLECTION = "messages"
+FEEDBACK_COLLECTION = "feedback"
 
 
 def create_chat(
@@ -17,7 +18,7 @@ def create_chat(
     db = get_db()
     
     now = datetime.now(timezone.utc)
-    
+
     chat_doc = {
         "userId": user_id,
         "chatName": chat_name,
@@ -29,6 +30,25 @@ def create_chat(
     ref = db.collection(COLLECTION).document()
     ref.set(chat_doc)
     chat_id = ref.id
+
+    # retrieve feedback document to ensure it exists
+    if feedback_id:
+        feedback_doc = db.collection(FEEDBACK_COLLECTION).document(feedback_id).get()
+        if not feedback_doc.exists:
+            raise ValueError(f"Feedback with ID {feedback_id} does not exist")
+        
+        # fetch feedback data
+        feedback_data = feedback_doc.to_dict()
+        if feedback_data.get("userId") != user_id:
+            raise ValueError(f"Feedback with ID {feedback_id} does not belong to the user")
+        
+        # add feedback content to chat messages subcollection
+        feedback_message_doc = {
+            "sender": "assistant",
+            "message": feedback_data.get("content", ""),
+            "createdAt": now,
+        }
+        db.collection(COLLECTION).document(chat_id).collection(MESSAGES_SUBCOLLECTION).document().set(feedback_message_doc)
     
     return Chat(
         chatId=chat_id,

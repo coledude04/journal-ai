@@ -1,9 +1,10 @@
 import os
 import google.genai as genai
 from google.genai import types
-from core.prompts import LLM_SYSTEM_INSTRUCTIONS
+from core.prompts import LLM_SYSTEM_INSTRUCTIONS, CHAT_LLM_SYSTEM_INSTRUCTIONS
 from core.secrets import access_secret
-from services.function_calling_service import get_user_specific_logs
+from services.function_calling_service import get_user_specific_logs, get_user_specific_log_by_date, get_user_specific_goals
+from models.chat import ChatMessage
 
 EMBEDDING_DIMENSIONALITY = 768
 client = genai.Client(api_key=access_secret(project_id=os.getenv("PROJECT_ID"), secret_id="GEMINI-API-KEY-DEV"))
@@ -18,6 +19,36 @@ def generate_response(user_id: str, input_text: str) -> str | None:
     response = client.models.generate_content(
         model=os.getenv("LLM_MODEL", "gemini-2.5-flash-lite"),
         contents=input_text,
+        config=config
+    )
+
+    return response.text
+
+
+def generate_chat_response(user_id: str, query: str, message_history: list[ChatMessage]) -> str | None:
+    config = types.GenerateContentConfig(
+        system_instruction=CHAT_LLM_SYSTEM_INSTRUCTIONS,
+        max_output_tokens=500,
+        tools=[get_user_specific_logs(user_id=user_id), get_user_specific_log_by_date(user_id=user_id), get_user_specific_goals(user_id=user_id)]
+    )
+
+    # add chat history to the query
+    contents = []
+    for message in message_history:
+        contents.append({
+            "role": "user" if message.sender == "user" else "model",
+            "parts": [{"text": message.message}]
+        })
+
+    # add the current query to the contents
+    contents.append({
+        "role": "user",
+        "parts": [{"text": query}]
+    })
+
+    response = client.models.generate_content(
+        model=os.getenv("LLM_MODEL", "gemini-2.5-flash-lite"),
+        contents=contents,
         config=config
     )
 

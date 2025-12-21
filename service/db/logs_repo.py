@@ -62,6 +62,21 @@ def list_logs(
     return DailyLogPage(items=items, nextPageToken=next_token)
 
 
+def get_log_by_date(user_id: str, date: date) -> DailyLog | None:
+    db = get_db()
+    docs = (
+        db.collection(COLLECTION)
+        .where("userId", "==", user_id)
+        .where("date", "==", date.isoformat())
+        .stream()
+    )
+    doc = next(docs, None)
+    if not doc:
+        return None
+    data = doc.to_dict()
+    return DailyLog(logId=doc.id, **data)
+
+
 def create_log(user_id: str, date: date, content: str, user_timezone: str) -> DailyLog:
     db = get_db()
     
