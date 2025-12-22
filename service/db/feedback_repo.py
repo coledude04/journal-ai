@@ -8,6 +8,7 @@ from db.logs_repo import list_logs
 from db.goals_repo import list_goals
 from services.gemini_service import generate_response
 from core.prompts import generate_input
+from core.time_validation import validate_feedback_time
 
 COLLECTION = "feedback"
 
@@ -52,7 +53,7 @@ def create_feedback(
     return AIFeedback(feedbackId=ref.id, **doc)
 
 
-def request_feedback(user_id: str, log_id: str) -> AIFeedback:
+def request_feedback(user_id: str, log_id: str, timezone: str) -> AIFeedback:
     """
     Request AI feedback for a log.
     Validates log ownership, generates feedback, and stores it.
@@ -74,10 +75,14 @@ def request_feedback(user_id: str, log_id: str) -> AIFeedback:
     if cur_log_data.get("userId") != user_id:
         raise ValueError("Unauthorized")
     
+    cur_log = DailyLog(logId=log_id, **cur_log_data)
+    
+    validate_feedback_time(timezone=timezone, log_date=cur_log.date)
+    
     # Generate feedback
     recent_logs = list_logs(user_id=user_id, page_size=3).items
     goals = list_goals(user_id=user_id, status="in_progress").items
-    input_text = generate_input(current_log=DailyLog(logId=log_id, **cur_log_data), prev_logs=recent_logs[1:], goals=goals)
+    input_text = generate_input(current_log=cur_log, prev_logs=recent_logs[1:], goals=goals)
 
     print(f"Input text for feedback generation: {input_text}")
     feedback_content = generate_response(user_id=user_id, input_text=input_text)

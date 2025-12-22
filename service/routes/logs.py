@@ -8,6 +8,7 @@ from models.logs import (
 )
 from core.auth import get_current_user_id
 from core.rate_limiter import check_rate_limit
+from core.time_validation import validate_log_time
 from db.logs_repo import list_logs, create_log, update_log
 from db.streaks_repo import update_user_streak
 
@@ -41,6 +42,7 @@ def create_log_handler(
     user_id: str = Depends(get_current_user_id),
 ):
     check_rate_limit(user_id=user_id)
+    validate_log_time(timezone=payload.timezone, log_date=payload.date)
     try:
         log = create_log(
             user_id=user_id,

@@ -19,7 +19,7 @@ def request_feedback_handler(
     check_rate_limit(user_id=user.userId, key="request_feedback")
 
     try:
-        return request_feedback(user_id=user.userId, log_id=payload.logId)
+        return request_feedback(user_id=user.userId, log_id=payload.logId, timezone=payload.timezone)
     except ValueError as e:
         if "Unauthorized" in str(e):
             raise HTTPException(status_code=403, detail=str(e))
