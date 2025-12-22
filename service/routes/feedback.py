@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from models.feedback import RequestFeedbackRequest, AIFeedback
-from core.auth import get_current_user_id, require_feedback_access
+from core.auth import get_current_user_id, require_feedback_access, decrement_feedback_tokens
 from core.rate_limiter import check_rate_limit
 from db.feedback_repo import request_feedback, get_feedback
 from models.user import User
@@ -19,11 +19,18 @@ def request_feedback_handler(
     check_rate_limit(user_id=user.userId, key="request_feedback")
 
     try:
-        return request_feedback(user_id=user.userId, log_id=payload.logId, timezone=payload.timezone)
+        feedback = request_feedback(user_id=user.userId, log_id=payload.logId, timezone=payload.timezone)
     except ValueError as e:
         if "Unauthorized" in str(e):
             raise HTTPException(status_code=403, detail=str(e))
         raise HTTPException(status_code=404, detail=str(e))
+    
+    try:
+        decrement_feedback_tokens(user=user)
+    except Exception as e:
+        print(f"Failed to decrement feedback tokens: {e}")
+
+    return feedback
 
 
 @router.get("/{log_id}", response_model=AIFeedback)

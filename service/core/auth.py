@@ -27,7 +27,6 @@ def get_current_user(user_id: str = Depends(get_current_user_id)) -> User:
 
 def require_feedback_access(user: User = Depends(get_current_user)) -> User:
     if user.feedbackTokens > 0:
-        decrement_feedback_tokens(user)
         return user
     
     if user.plan != "paid":
