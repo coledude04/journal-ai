@@ -26,6 +26,10 @@ def get_current_user(user_id: str = Depends(get_current_user_id)) -> User:
     
 
 def require_feedback_access(user: User = Depends(get_current_user)) -> User:
+    if user.feedbackTokens > 0:
+        decrement_feedback_tokens(user)
+        return user
+    
     if user.plan != "paid":
         raise HTTPException(402, "Upgrade required")
 
@@ -49,4 +53,9 @@ def require_chat_tokens(user: User = Depends(get_current_user)) -> User:
 
 def decrement_chat_tokens(user: User):
     user.chatTokens -= 1
+    update_user(user)
+
+
+def decrement_feedback_tokens(user: User):
+    user.feedbackTokens -= 1
     update_user(user)

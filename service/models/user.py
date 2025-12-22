@@ -16,6 +16,7 @@ class User(BaseModel):
     subscription_status: Literal["active", "canceled", "expired", "none"] = "none"
     subscription_expires_at: datetime | None = None
     chatTokens: int = 0
+    feedbackTokens: int = 0
 
     last_revenuecat_sync: datetime | None = None
 
@@ -31,5 +32,6 @@ class User(BaseModel):
             "subscription_status": self.subscription_status,
             "subscription_expires_at": self.subscription_expires_at,
             "chatTokens": self.chatTokens,
+            "feedbackTokens": self.feedbackTokens,
             "last_revenuecat_sync": self.last_revenuecat_sync
         }
