@@ -1,6 +1,7 @@
 from datetime import date, datetime
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from pydantic import BaseModel, field_validator
+from models.feedback import AIFeedback
 
 class DailyLog(BaseModel):
     logId: str
@@ -35,3 +36,26 @@ class UpdateDailyLogRequest(BaseModel):
 class DailyLogPage(BaseModel):
     items: list[DailyLog]
     nextPageToken: str | None = None
+
+
+class DailyLogByIdResponse(BaseModel):
+    log: DailyLog
+    feedback: AIFeedback | None = None
+
+
+class CalendarDay(BaseModel):
+    day: int
+    logId: str | None = None
+    hasFeedback: bool = False
+
+
+class CalendarMonth(BaseModel):
+    calendarMonthId: str
+    year: int
+    month: int
+    firstWeekday: int
+    days: dict[str, CalendarDay]
+    createdAt: datetime
+
+class CalendarMonthsResponse(BaseModel):
+    items: list[CalendarMonth]

@@ -5,11 +5,13 @@ from google.cloud.firestore_v1.vector import Vector
 from db.firestore import get_db
 from db.user_repo import get_user
 from core.pagination import encode_page_token, decode_page_token
-from models.logs import DailyLog, DailyLogPage
+from models.logs import DailyLog, DailyLogPage, DailyLogByIdResponse
+from core.auth import is_user_paid
 from services.embedding_service import generate_embedding
 
 COLLECTION = "logs"
 EMBEDDING_COLLECTION = "log_embeddings"
+USER_LOGS_COLLECTION = "user_logs"
 
 def list_logs(
     user_id: str,
@@ -62,6 +64,29 @@ def list_logs(
     return DailyLogPage(items=items, nextPageToken=next_token)
 
 
+def get_log_by_id(user_id: str, log_id: str) -> DailyLogByIdResponse:
+    from db.feedback_repo import get_feedback
+
+    db = get_db()
+    ref = db.collection(COLLECTION).document(log_id)
+    
+    doc = ref.get()
+    if not doc.exists:
+        raise ValueError("Log not found")
+    
+    data = doc.to_dict()
+    if data.get("userId") != user_id:
+        raise ValueError("Unauthorized")
+    
+    log = DailyLog(logId=log_id, **data)
+    
+    feedback = None
+    if log.aiFeedbackGenerated:
+        feedback = get_feedback(user_id=user_id, log_id=log_id)
+
+    return DailyLogByIdResponse(log=log, feedback=feedback)
+
+
 def get_log_by_date(user_id: str, date: date) -> DailyLog | None:
     db = get_db()
     docs = (
@@ -109,7 +134,7 @@ def create_log(user_id: str, date: date, content: str, user_timezone: str) -> Da
     ref.set(doc)
 
     user = get_user(user_id=user_id)
-    if user.plan == "paid":
+    if is_user_paid(user=user):
         try:
             embed_log(db, user_id, ref.id, content, date_str)
         except Exception as e:
@@ -152,7 +177,3 @@ def embed_log(db: Any, user_id: str, log_id: str, log_content: str, date: str) -
         "content": log_content,
         "date": date,
     })
-
-
-def validate_date(date: str, timezone: str) -> bool:
-    return True

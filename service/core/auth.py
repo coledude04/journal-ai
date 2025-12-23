@@ -3,7 +3,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from core.firebase import verify_token
 from datetime import datetime, timezone
 from models.user import User
-from db.user_repo import get_user, update_user
+from db.user_repo import get_user
 
 security = HTTPBearer()
 
@@ -41,6 +41,11 @@ def require_feedback_access(user: User = Depends(get_current_user)) -> User:
         raise HTTPException(402, "Subscription inactive")
     
     return user
+
+def is_user_paid(user: User):
+    allowed_statuses = {"active", "canceled"}
+    now = datetime.now(timezone.utc)
+    return user.plan == "paid" and user.subscription_expires_at and user.subscription_expires_at > now and user.subscription_status in allowed_statuses
     
 
 def require_chat_tokens(user: User = Depends(get_current_user)) -> User:
@@ -48,13 +53,3 @@ def require_chat_tokens(user: User = Depends(get_current_user)) -> User:
         raise HTTPException(402, "No tokens available")
     
     return user
-
-
-def decrement_chat_tokens(user: User):
-    user.chatTokens -= 1
-    update_user(user)
-
-
-def decrement_feedback_tokens(user: User):
-    user.feedbackTokens -= 1
-    update_user(user)

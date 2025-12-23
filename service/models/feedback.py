@@ -17,7 +17,6 @@ class RequestFeedbackRequest(BaseModel):
 
 
 class AIFeedback(BaseModel):
-    feedbackId: str
     logId: str
     content: str
     modelVersion: str

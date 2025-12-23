@@ -6,6 +6,7 @@ from models.logs import DailyLog
 from db.logs_repo import COLLECTION as LOGS_COLLECTION
 from db.logs_repo import list_logs
 from db.goals_repo import list_goals
+from db.user_logs_repo import update_user_collection_with_feedback
 from services.gemini_service import generate_response
 from core.prompts import generate_input
 from core.time_validation import validate_feedback_time
@@ -15,18 +16,17 @@ COLLECTION = "feedback"
 def get_feedback(user_id: str, log_id: str) -> AIFeedback | None:
     """Get feedback for a specific log"""
     db = get_db()
-    docs = db.collection(COLLECTION).where(
-        "logId", "==", log_id
-    ).where(
-        "userId", "==", user_id
-    ).limit(1).stream()
-    
-    doc = next(docs, None)
-    if not doc:
+    ref = db.collection(COLLECTION).document(log_id)
+
+    doc = ref.get()
+    if not doc.exists:
         return None
     
     data = doc.to_dict()
-    return AIFeedback(feedbackId=doc.id, **data)
+    if doc.get("userId") != user_id:
+        raise ValueError("Unauthorized")
+    
+    return AIFeedback(logId=doc.id, **data)
 
 
 def create_feedback(
@@ -37,12 +37,11 @@ def create_feedback(
     """Create AI feedback for a log"""
     db = get_db()
     
-    ref = db.collection(COLLECTION).document()
+    ref = db.collection(COLLECTION).document(log_id)
     now = datetime.now(timezone.utc)
     
     doc = {
         "userId": user_id,
-        "logId": log_id,
         "content": content,
         "modelVersion": os.getenv("LLM_MODEL", "gemini-2.5-flash-lite"),
         "createdAt": now,
@@ -50,7 +49,7 @@ def create_feedback(
     
     ref.set(doc)
     
-    return AIFeedback(feedbackId=ref.id, **doc)
+    return AIFeedback(logId=log_id, **doc)
 
 
 def request_feedback(user_id: str, log_id: str, timezone: str) -> AIFeedback:
@@ -96,6 +95,10 @@ def request_feedback(user_id: str, log_id: str, timezone: str) -> AIFeedback:
     )
 
     # Update log with aiFeedbackGenerated = True
-    db.collection(LOGS_COLLECTION).document(log_id).update({"aiFeedbackGenerated": True})
+    try:
+        db.collection(LOGS_COLLECTION).document(log_id).update({"aiFeedbackGenerated": True})
+        update_user_collection_with_feedback(user_id=user_id, log_date=cur_log.date)
+    except Exception as e:
+        print(f"Failed to update 'aiFeedbackGenerated': {e}")
 
     return feedback

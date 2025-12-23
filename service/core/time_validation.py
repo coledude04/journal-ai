@@ -40,7 +40,7 @@ def validate_feedback_time(timezone: str, log_date: date):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={
                 "error": "outside_feedback_window",
-                "message": "AI feedback can only be requested between 12:00 PM and midnight on the day of the log.",
+                "message": "AI feedback can only be requested between 12:00 PM and midnight on the day after the log.",
                 "current_time_user": now.strftime("%I:%M %p")
             }
         )

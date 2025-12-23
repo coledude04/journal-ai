@@ -6,7 +6,7 @@ from models.chat import (
     CreateChatRequest,
     SendMessageRequest,
 )
-from core.auth import get_current_user_id, require_chat_tokens, decrement_chat_tokens
+from core.auth import get_current_user_id, require_chat_tokens
 from core.rate_limiter import check_rate_limit
 from db.chat_repo import (
     create_chat,
@@ -14,6 +14,7 @@ from db.chat_repo import (
     add_message,
     list_chats,
 )
+from db.user_repo import decrement_token
 from models.user import User
 from services.gemini_service import generate_chat_response
 
@@ -95,7 +96,7 @@ def send_message_handler(
 
     # Decrement the user's chat tokens
     try:
-        decrement_chat_tokens(user=user)
+        decrement_token(user_id=user.userId, token="chatTokens")
     except Exception as e:
         print(f"Failed to decrement chat tokens: {e}")
     

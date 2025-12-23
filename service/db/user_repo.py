@@ -1,5 +1,7 @@
 from db.firestore import get_db
 from models.user import User
+from typing import Literal
+from google.cloud import firestore
 
 COLLECTION = "users"
 
@@ -24,6 +26,10 @@ def initialize_user(user_id: str) -> User:
     return new_user
 
 
-def update_user(user: User) -> None:
+def decrement_token(user_id: str, token: Literal["chatTokens", "feedbackTokens"]) -> None:
     db = get_db()
-    db.collection(COLLECTION).document(user.userId).update(user.to_dict_firestore())
+    user_ref = db.collection(COLLECTION).document(user_id)
+    
+    user_ref.update({
+        token: firestore.Increment(-1)
+    })
