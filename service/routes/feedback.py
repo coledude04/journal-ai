@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from models.feedback import RequestFeedbackRequest, AIFeedback
-from core.auth import get_current_user_id, require_feedback_access
+from core.auth import get_current_user_id, require_feedback_access, is_user_paid
 from core.rate_limiter import check_rate_limit
 from db.feedback_repo import request_feedback, get_feedback
 from db.user_repo import decrement_token
@@ -26,10 +26,11 @@ def request_feedback_handler(
             raise HTTPException(status_code=403, detail=str(e))
         raise HTTPException(status_code=404, detail=str(e))
     
-    try:
-        decrement_token(user_id=user.userId, token="feedbackTokens")
-    except Exception as e:
-        print(f"Failed to decrement feedback tokens: {e}")
+    if not is_user_paid(user=user):
+        try:
+            decrement_token(user_id=user.userId, token="feedbackTokens")
+        except Exception as e:
+            print(f"Failed to decrement feedback tokens: {e}")
 
     return feedback
 
