@@ -31,20 +31,19 @@ def create_chat(
     """
     # Validate and fetch feedback if provided
     if feedback_id:
-        feedback_data, exists = get_feedback_by_id(feedback_id)
-        if not exists:
+        feedback, feedback_user_id = get_feedback_by_id(feedback_id)
+        if not feedback:
             raise ValueError(f"Feedback with ID {feedback_id} does not exist")
         
-        if feedback_data.get("userId") != user_id:
+        if feedback_user_id != user_id:
             raise ValueError(f"Feedback with ID {feedback_id} does not belong to the user")
     
     # Create the chat
     chat = db_create_chat(user_id=user_id, chat_name=chat_name, feedback_id=feedback_id)
     
     # Add feedback as initial message if provided
-    if feedback_id:
-        feedback_content = feedback_data.get("content", "")
-        add_initial_feedback_message(chat_id=chat.chatId, feedback_content=feedback_content)
+    if feedback_id and feedback:
+        add_initial_feedback_message(chat_id=chat.chatId, feedback_content=feedback.content)
     
     return chat
 
