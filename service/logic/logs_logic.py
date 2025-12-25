@@ -11,7 +11,6 @@ from db.logs_repo import (
     update_log as db_update_log,
     get_log_by_id as db_get_log_by_id,
     get_log_by_date as db_get_log_by_date,
-    EMBEDDING_COLLECTION,
 )
 from db.firestore import get_db
 from db.streaks_repo import update_user_streak
@@ -20,6 +19,8 @@ from db.user_repo import get_user
 from core.auth import is_user_paid
 from services.embedding_service import generate_embedding
 from google.cloud.firestore_v1.vector import Vector
+
+EMBEDDING_COLLECTION = "log_embeddings"
 
 
 def list_logs(
@@ -92,7 +93,7 @@ def create_log(
     try:
         update_user_collection_with_log(user_id=user_id, new_log_id=log.logId, log_date=log.date)
     except Exception as e:
-        print(f"Warning: Failed to updated user_logs collection: {e}")
+        print(f"Warning: Failed to update user_logs collection: {e}")
     
     # Generate embeddings for paid users
     user = get_user(user_id=user_id)
