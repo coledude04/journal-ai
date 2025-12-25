@@ -10,17 +10,13 @@ from db.logs_repo import (
     update_log as db_update_log,
     get_log_by_id as db_get_log_by_id,
     get_log_by_date as db_get_log_by_date,
+    create_log_embedding,
 )
 from db.feedback_repo import get_feedback as db_get_feedback
-from db.firestore import get_db
 from db.streaks_repo import update_user_streak
 from db.user_logs_repo import update_user_collection_with_log
 from db.user_repo import get_user
 from core.auth import is_user_paid
-from services.embedding_service import generate_embedding
-from google.cloud.firestore_v1.vector import Vector
-
-EMBEDDING_COLLECTION = "log_embeddings"
 
 
 def list_logs(
@@ -97,28 +93,11 @@ def create_log(
     user = get_user(user_id=user_id)
     if is_user_paid(user=user):
         try:
-            _embed_log(user_id=user_id, log_id=log.logId, content=content, date_str=str(date))
+            create_log_embedding(user_id=user_id, log_id=log.logId, content=content, date_str=str(date))
         except Exception as e:
             print(f"Warning: Failed to embed log: {e}")
     
     return log
-
-
-def _embed_log(user_id: str, log_id: str, content: str, date_str: str) -> None:
-    """
-    Generate and store embeddings for a log.
-    Internal helper function for embedding logic.
-    """
-    print(f"Embedding log {log_id} for user {user_id}")
-    
-    db = get_db()
-    log_embedding = generate_embedding(content)
-    db.collection(EMBEDDING_COLLECTION).document(log_id).set({
-        "userId": user_id,
-        "embedding": Vector(log_embedding),
-        "content": content,
-        "date": date_str,
-    })
 
 
 def update_log(

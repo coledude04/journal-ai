@@ -9,9 +9,8 @@ from db.chat_repo import (
     add_message as db_add_message,
     list_chats as db_list_chats,
     add_initial_feedback_message,
-    FEEDBACK_COLLECTION,
 )
-from db.firestore import get_db
+from db.feedback_repo import get_feedback_by_id
 from db.user_repo import decrement_token
 from services.gemini_service import generate_chat_response
 
@@ -32,12 +31,10 @@ def create_chat(
     """
     # Validate and fetch feedback if provided
     if feedback_id:
-        db = get_db()
-        feedback_doc = db.collection(FEEDBACK_COLLECTION).document(feedback_id).get()
-        if not feedback_doc.exists:
+        feedback_data, exists = get_feedback_by_id(feedback_id)
+        if not exists:
             raise ValueError(f"Feedback with ID {feedback_id} does not exist")
         
-        feedback_data = feedback_doc.to_dict()
         if feedback_data.get("userId") != user_id:
             raise ValueError(f"Feedback with ID {feedback_id} does not belong to the user")
     

@@ -29,6 +29,20 @@ def get_feedback(user_id: str, log_id: str) -> AIFeedback | None:
     return AIFeedback(logId=doc.id, **data)
 
 
+def get_feedback_by_id(feedback_id: str) -> tuple[dict, bool]:
+    """
+    Get feedback by ID and return (feedback_data, exists).
+    Pure database operation for feedback validation.
+    """
+    db = get_db()
+    doc = db.collection(COLLECTION).document(feedback_id).get()
+    
+    if not doc.exists:
+        return ({}, False)
+    
+    return (doc.to_dict(), True)
+
+
 def create_feedback(
     user_id: str,
     log_id: str,
