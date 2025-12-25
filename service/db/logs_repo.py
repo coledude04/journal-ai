@@ -1,17 +1,10 @@
 from datetime import datetime, timezone, date
-from typing import Any
 from google.cloud.firestore_v1 import Query
-from google.cloud.firestore_v1.vector import Vector
 from db.firestore import get_db
-from db.user_repo import get_user
 from core.pagination import encode_page_token, decode_page_token
-from models.logs import DailyLog, DailyLogPage, DailyLogByIdResponse
-from core.auth import is_user_paid
-from services.embedding_service import generate_embedding
+from models.logs import DailyLog, DailyLogPage
 
 COLLECTION = "logs"
-EMBEDDING_COLLECTION = "log_embeddings"
-USER_LOGS_COLLECTION = "user_logs"
 
 def list_logs(
     user_id: str,
@@ -64,9 +57,11 @@ def list_logs(
     return DailyLogPage(items=items, nextPageToken=next_token)
 
 
-def get_log_by_id(user_id: str, log_id: str) -> DailyLogByIdResponse:
-    from db.feedback_repo import get_feedback
-
+def get_log_by_id(user_id: str, log_id: str) -> DailyLog:
+    """
+    Get a log by ID.
+    Pure database operation - just retrieves the log.
+    """
     db = get_db()
     ref = db.collection(COLLECTION).document(log_id)
     
@@ -78,13 +73,7 @@ def get_log_by_id(user_id: str, log_id: str) -> DailyLogByIdResponse:
     if data.get("userId") != user_id:
         raise ValueError("Unauthorized")
     
-    log = DailyLog(logId=log_id, **data)
-    
-    feedback = None
-    if log.aiFeedbackGenerated:
-        feedback = get_feedback(user_id=user_id, log_id=log_id)
-
-    return DailyLogByIdResponse(log=log, feedback=feedback)
+    return DailyLog(logId=log_id, **data)
 
 
 def get_log_by_date(user_id: str, date: date) -> DailyLog | None:
@@ -103,6 +92,10 @@ def get_log_by_date(user_id: str, date: date) -> DailyLog | None:
 
 
 def create_log(user_id: str, date: date, content: str, user_timezone: str) -> DailyLog:
+    """
+    Create a new log in the database.
+    Pure database operation - no business logic.
+    """
     db = get_db()
     
     date_str = str(date)
@@ -133,13 +126,6 @@ def create_log(user_id: str, date: date, content: str, user_timezone: str) -> Da
 
     ref.set(doc)
 
-    user = get_user(user_id=user_id)
-    if is_user_paid(user=user):
-        try:
-            embed_log(db, user_id, ref.id, content, date_str)
-        except Exception as e:
-            print(f"Failed to embed log: {e}")
-
     return DailyLog(logId=ref.id, **doc)
 
 
@@ -165,15 +151,3 @@ def update_log(user_id: str, log_id: str, content: str) -> DailyLog:
     data.update(updates)
     
     return DailyLog(logId=log_id, **data)
-
-
-def embed_log(db: Any, user_id: str, log_id: str, log_content: str, date: str) -> None:
-    print(f"Embedding log {log_id} for user {user_id}")
-
-    log_embedding = generate_embedding(log_content)
-    db.collection(EMBEDDING_COLLECTION).document(log_id).set({
-        "userId": user_id,
-        "embedding": Vector(log_embedding),
-        "content": log_content,
-        "date": date,
-    })

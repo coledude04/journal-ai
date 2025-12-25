@@ -3,6 +3,7 @@ Business logic for logs management.
 Orchestrates log operations with related updates (streaks, embeddings, user_logs).
 """
 from datetime import date
+from typing import Any
 from models.logs import DailyLog, DailyLogPage, DailyLogByIdResponse
 from db.logs_repo import (
     list_logs as db_list_logs,
@@ -10,9 +11,15 @@ from db.logs_repo import (
     update_log as db_update_log,
     get_log_by_id as db_get_log_by_id,
     get_log_by_date as db_get_log_by_date,
+    EMBEDDING_COLLECTION,
 )
+from db.firestore import get_db
 from db.streaks_repo import update_user_streak
 from db.user_logs_repo import update_user_collection_with_log
+from db.user_repo import get_user
+from core.auth import is_user_paid
+from services.embedding_service import generate_embedding
+from google.cloud.firestore_v1.vector import Vector
 
 
 def list_logs(
@@ -33,8 +40,19 @@ def list_logs(
 
 
 def get_log_by_id(user_id: str, log_id: str) -> DailyLogByIdResponse:
-    """Get a specific log by ID with its feedback if available."""
-    return db_get_log_by_id(user_id=user_id, log_id=log_id)
+    """
+    Get a specific log by ID with its feedback if available.
+    Orchestrates fetching the log and its associated feedback.
+    """
+    from db.feedback_repo import get_feedback as db_get_feedback
+    
+    log = db_get_log_by_id(user_id=user_id, log_id=log_id)
+    
+    feedback = None
+    if log.aiFeedbackGenerated:
+        feedback = db_get_feedback(user_id=user_id, log_id=log_id)
+    
+    return DailyLogByIdResponse(log=log, feedback=feedback)
 
 
 def get_log_by_date(user_id: str, date: date) -> DailyLog | None:
@@ -51,8 +69,9 @@ def create_log(
     """
     Create a new log and orchestrate related updates.
     
-    Creates the log, updates user streak, and updates user_logs collection.
-    Failures in streak or user_logs updates are logged but don't fail the operation.
+    Creates the log, updates user streak, updates user_logs collection,
+    and generates embeddings for paid users.
+    Failures in streak, user_logs, or embedding updates are logged but don't fail the operation.
     """
     # Create the log
     log = db_create_log(
@@ -75,7 +94,32 @@ def create_log(
     except Exception as e:
         print(f"Warning: Failed to updated user_logs collection: {e}")
     
+    # Generate embeddings for paid users
+    user = get_user(user_id=user_id)
+    if is_user_paid(user=user):
+        try:
+            _embed_log(user_id=user_id, log_id=log.logId, content=content, date_str=str(date))
+        except Exception as e:
+            print(f"Warning: Failed to embed log: {e}")
+    
     return log
+
+
+def _embed_log(user_id: str, log_id: str, content: str, date_str: str) -> None:
+    """
+    Generate and store embeddings for a log.
+    Internal helper function for embedding logic.
+    """
+    print(f"Embedding log {log_id} for user {user_id}")
+    
+    db = get_db()
+    log_embedding = generate_embedding(content)
+    db.collection(EMBEDDING_COLLECTION).document(log_id).set({
+        "userId": user_id,
+        "embedding": Vector(log_embedding),
+        "content": content,
+        "date": date_str,
+    })
 
 
 def update_log(

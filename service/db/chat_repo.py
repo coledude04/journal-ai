@@ -14,7 +14,10 @@ def create_chat(
     chat_name: str,
     feedback_id: str | None = None,
 ) -> Chat:
-    """Create a new chat"""
+    """
+    Create a new chat in the database.
+    Pure database operation.
+    """
     db = get_db()
     
     now = datetime.now(timezone.utc)
@@ -30,25 +33,6 @@ def create_chat(
     ref = db.collection(COLLECTION).document()
     ref.set(chat_doc)
     chat_id = ref.id
-
-    # retrieve feedback document to ensure it exists
-    if feedback_id:
-        feedback_doc = db.collection(FEEDBACK_COLLECTION).document(feedback_id).get()
-        if not feedback_doc.exists:
-            raise ValueError(f"Feedback with ID {feedback_id} does not exist")
-        
-        # fetch feedback data
-        feedback_data = feedback_doc.to_dict()
-        if feedback_data.get("userId") != user_id:
-            raise ValueError(f"Feedback with ID {feedback_id} does not belong to the user")
-        
-        # add feedback content to chat messages subcollection
-        feedback_message_doc = {
-            "sender": "assistant",
-            "message": feedback_data.get("content", ""),
-            "createdAt": now,
-        }
-        db.collection(COLLECTION).document(chat_id).collection(MESSAGES_SUBCOLLECTION).document().set(feedback_message_doc)
     
     return Chat(
         chatId=chat_id,
@@ -58,6 +42,22 @@ def create_chat(
         createdAt=now,
         updatedAt=now,
     )
+
+
+def add_initial_feedback_message(chat_id: str, feedback_content: str) -> None:
+    """
+    Add feedback as the initial message in a chat.
+    Helper function for chat creation with feedback.
+    """
+    db = get_db()
+    now = datetime.now(timezone.utc)
+    
+    feedback_message_doc = {
+        "sender": "assistant",
+        "message": feedback_content,
+        "createdAt": now,
+    }
+    db.collection(COLLECTION).document(chat_id).collection(MESSAGES_SUBCOLLECTION).document().set(feedback_message_doc)
 
 
 def get_chat(user_id: str, chat_id: str) -> Chat | None:
