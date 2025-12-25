@@ -6,7 +6,6 @@ from db.user_repo import (
     get_user as db_get_user,
     initialize_user as db_initialize_user,
 )
-from typing import Literal
 
 
 def get_user(user_id: str) -> User:

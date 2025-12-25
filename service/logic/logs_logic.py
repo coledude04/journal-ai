@@ -12,6 +12,7 @@ from db.logs_repo import (
     get_log_by_id as db_get_log_by_id,
     get_log_by_date as db_get_log_by_date,
 )
+from db.feedback_repo import get_feedback as db_get_feedback
 from db.firestore import get_db
 from db.streaks_repo import update_user_streak
 from db.user_logs_repo import update_user_collection_with_log
@@ -45,8 +46,6 @@ def get_log_by_id(user_id: str, log_id: str) -> DailyLogByIdResponse:
     Get a specific log by ID with its feedback if available.
     Orchestrates fetching the log and its associated feedback.
     """
-    from db.feedback_repo import get_feedback as db_get_feedback
-    
     log = db_get_log_by_id(user_id=user_id, log_id=log_id)
     
     feedback = None
