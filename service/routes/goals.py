@@ -8,7 +8,7 @@ from models.goals import (
 )
 from core.auth import get_current_user_id
 from core.rate_limiter import check_rate_limit
-from db.goals_repo import list_goals, create_goal, update_goal, delete_goal, complete_goal
+from logic.goals_logic import list_goals, create_goal, update_goal, delete_goal, complete_goal
 
 router = APIRouter(prefix="/goals", tags=["Goals"])
 

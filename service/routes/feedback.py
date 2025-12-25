@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from models.feedback import RequestFeedbackRequest, AIFeedback
 from core.auth import get_current_user_id, require_feedback_access, is_user_paid
 from core.rate_limiter import check_rate_limit
-from db.feedback_repo import request_feedback, get_feedback
+from logic.feedback_logic import request_feedback, get_feedback
 from db.user_repo import decrement_token
 from models.user import User
 

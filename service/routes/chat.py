@@ -8,15 +8,13 @@ from models.chat import (
 )
 from core.auth import get_current_user_id, require_chat_tokens
 from core.rate_limiter import check_rate_limit
-from db.chat_repo import (
+from logic.chat_logic import (
     create_chat,
     get_chat,
-    add_message,
+    send_message,
     list_chats,
 )
-from db.user_repo import decrement_token
 from models.user import User
-from services.gemini_service import generate_chat_response
 
 router = APIRouter(prefix="/chats", tags=["Chat"])
 
@@ -77,30 +75,19 @@ def send_message_handler(
     if not chat:
         raise HTTPException(status_code=404, detail="Chat not found")
     
-    # Store the user message
-    add_message(
-        chat_id=chat_id,
-        sender="user",
-        message=payload.message,
-    )
-
-    # Generate and store the AI response
-    ai_response = generate_chat_response(user_id=user.userId, query=payload.message, message_history=chat.messages)
-    if not ai_response:
-        raise HTTPException(status_code=500, detail="Failed to generate AI response")
-    assistant_message = add_message(
-        chat_id=chat_id,
-        sender="assistant",
-        message=ai_response,
-    )
-
-    # Decrement the user's chat tokens
+    # Send message and get AI response
     try:
-        decrement_token(user_id=user.userId, token="chatTokens")
+        assistant_message = send_message(
+            user_id=user.userId,
+            chat_id=chat_id,
+            message=payload.message,
+            chat_messages=chat.messages,
+        )
+        return assistant_message
     except Exception as e:
-        print(f"Failed to decrement chat tokens: {e}")
-    
-    return assistant_message
+        if "Failed to generate AI response" in str(e):
+            raise HTTPException(status_code=500, detail="Failed to generate AI response")
+        raise
 
 
 @router.get("", response_model=ChatPage)

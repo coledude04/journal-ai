@@ -11,9 +11,8 @@ from models.logs import (
 from core.auth import get_current_user_id
 from core.rate_limiter import check_rate_limit
 from core.time_validation import validate_log_time
-from db.logs_repo import list_logs, create_log, update_log, get_log_by_id
-from db.streaks_repo import update_user_streak
-from db.user_logs_repo import list_calendar_months, update_user_collection_with_log
+from logic.logs_logic import list_logs, create_log, update_log, get_log_by_id
+from db.user_logs_repo import list_calendar_months
 
 router = APIRouter(prefix="/logs", tags=["Logs"])
 
@@ -66,21 +65,6 @@ def create_log_handler(
             content=payload.content,
             user_timezone=payload.timezone,
         )
-        
-        # Update user streak (default to America/Chicago if timezone not provided)
-        timezone = getattr(payload, "timezone", "America/Chicago")
-        try:
-            update_user_streak(user_id=user_id, timezone=timezone, log_date=payload.date)
-        except Exception as e:
-            # Streak update failure shouldn't fail the log creation
-            print(f"Warning: Failed to update streak: {e}")
-
-        # Update user_logs_collection
-        try:
-            update_user_collection_with_log(user_id=user_id, new_log_id=log.logId, log_date=log.date)
-        except Exception as e:
-            print(f"Warning: Failed to updated user_logs collection: {e}")
-        
         return log
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
