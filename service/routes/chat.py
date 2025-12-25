@@ -13,6 +13,7 @@ from logic.chat_logic import (
     get_chat,
     send_message,
     list_chats,
+    AIResponseError,
 )
 from models.user import User
 
@@ -84,10 +85,8 @@ def send_message_handler(
             chat_messages=chat.messages,
         )
         return assistant_message
-    except Exception as e:
-        if "Failed to generate AI response" in str(e):
-            raise HTTPException(status_code=500, detail="Failed to generate AI response")
-        raise
+    except AIResponseError as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("", response_model=ChatPage)

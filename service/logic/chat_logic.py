@@ -16,6 +16,11 @@ from db.user_repo import decrement_token
 from services.gemini_service import generate_chat_response
 
 
+class AIResponseError(Exception):
+    """Raised when AI fails to generate a response."""
+    pass
+
+
 def create_chat(
     user_id: str,
     chat_name: str,
@@ -77,6 +82,7 @@ def send_message(
     - Decrementing user chat tokens
     
     Returns the AI response message.
+    Raises AIResponseError if AI fails to generate a response.
     """
     # Store the user message
     db_add_message(chat_id=chat_id, sender="user", message=message)
@@ -89,7 +95,7 @@ def send_message(
     )
     
     if not ai_response:
-        raise Exception("Failed to generate AI response")
+        raise AIResponseError("Failed to generate AI response")
     
     assistant_message = db_add_message(
         chat_id=chat_id,

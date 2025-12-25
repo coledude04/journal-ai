@@ -3,7 +3,6 @@ Business logic for logs management.
 Orchestrates log operations with related updates (streaks, embeddings, user_logs).
 """
 from datetime import date
-from typing import Any
 from models.logs import DailyLog, DailyLogPage, DailyLogByIdResponse
 from db.logs_repo import (
     list_logs as db_list_logs,
