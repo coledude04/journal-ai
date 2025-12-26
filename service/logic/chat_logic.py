@@ -42,6 +42,7 @@ def create_chat(
     chat = db_create_chat(user_id=user_id, chat_name=chat_name, feedback_id=feedback_id)
     
     # Add feedback as initial message if provided
+    feedback = None
     if feedback_id and feedback:
         add_initial_feedback_message(chat_id=chat.chatId, feedback_content=feedback.content)
     

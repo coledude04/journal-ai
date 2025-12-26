@@ -11,7 +11,7 @@ from db.feedback_repo import (
 )
 from db.logs_repo import list_logs
 from db.goals_repo import list_goals
-from db.user_logs_repo import update_user_collection_with_feedback
+from logic.user_logs_logic import update_user_collection_with_feedback
 from services.gemini_service import generate_response
 from core.prompts import generate_input
 from core.time_validation import validate_feedback_time

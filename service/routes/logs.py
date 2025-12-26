@@ -12,7 +12,7 @@ from core.auth import get_current_user_id
 from core.rate_limiter import check_rate_limit
 from core.time_validation import validate_log_time
 from logic.logs_logic import list_logs, create_log, update_log, get_log_by_id
-from db.user_logs_repo import list_calendar_months
+from logic.user_logs_logic import list_calendar_months
 
 router = APIRouter(prefix="/logs", tags=["Logs"])
 

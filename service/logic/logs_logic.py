@@ -14,7 +14,7 @@ from db.logs_repo import (
 )
 from db.feedback_repo import get_feedback as db_get_feedback
 from db.streaks_repo import update_user_streak
-from db.user_logs_repo import update_user_collection_with_log
+from logic.user_logs_logic import update_user_collection_with_log
 from db.user_repo import get_user
 from core.auth import is_user_paid
 
