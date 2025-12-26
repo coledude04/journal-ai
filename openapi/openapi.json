@@ -153,6 +153,53 @@
          }
       },
       "/logs/{logId}":{
+         "get":{
+            "tags":[
+               "Logs"
+            ],
+            "summary":"Get Log By Id Handler",
+            "operationId":"get_log_by_id_handler_logs__logId__get",
+            "security":[
+               {
+                  "HTTPBearer":[
+                     
+                  ]
+               }
+            ],
+            "parameters":[
+               {
+                  "name":"logId",
+                  "in":"path",
+                  "required":true,
+                  "schema":{
+                     "type":"string",
+                     "title":"Logid"
+                  }
+               }
+            ],
+            "responses":{
+               "200":{
+                  "description":"Successful Response",
+                  "content":{
+                     "application/json":{
+                        "schema":{
+                           "$ref":"#/components/schemas/DailyLogByIdResponse"
+                        }
+                     }
+                  }
+               },
+               "422":{
+                  "description":"Validation Error",
+                  "content":{
+                     "application/json":{
+                        "schema":{
+                           "$ref":"#/components/schemas/HTTPValidationError"
+                        }
+                     }
+                  }
+               }
+            }
+         },
          "put":{
             "tags":[
                "Logs"
@@ -194,6 +241,78 @@
                      "application/json":{
                         "schema":{
                            "$ref":"#/components/schemas/DailyLog"
+                        }
+                     }
+                  }
+               },
+               "422":{
+                  "description":"Validation Error",
+                  "content":{
+                     "application/json":{
+                        "schema":{
+                           "$ref":"#/components/schemas/HTTPValidationError"
+                        }
+                     }
+                  }
+               }
+            }
+         }
+      },
+      "/logs/calendar/months":{
+         "get":{
+            "tags":[
+               "Logs"
+            ],
+            "summary":"Get Calendar Months",
+            "operationId":"get_calendar_months_logs_calendar_months_get",
+            "security":[
+               {
+                  "HTTPBearer":[
+                     
+                  ]
+               }
+            ],
+            "parameters":[
+               {
+                  "name":"startYear",
+                  "in":"query",
+                  "required":true,
+                  "schema":{
+                     "type":"integer",
+                     "title":"Startyear"
+                  }
+               },
+               {
+                  "name":"startMonth",
+                  "in":"query",
+                  "required":true,
+                  "schema":{
+                     "type":"integer",
+                     "maximum":12,
+                     "minimum":1,
+                     "title":"Startmonth"
+                  }
+               },
+               {
+                  "name":"numMonths",
+                  "in":"query",
+                  "required":false,
+                  "schema":{
+                     "type":"integer",
+                     "maximum":12,
+                     "minimum":1,
+                     "default":3,
+                     "title":"Nummonths"
+                  }
+               }
+            ],
+            "responses":{
+               "200":{
+                  "description":"Successful Response",
+                  "content":{
+                     "application/json":{
+                        "schema":{
+                           "$ref":"#/components/schemas/CalendarMonthsResponse"
                         }
                      }
                   }
@@ -867,10 +986,6 @@
       "schemas":{
          "AIFeedback":{
             "properties":{
-               "feedbackId":{
-                  "type":"string",
-                  "title":"Feedbackid"
-               },
                "logId":{
                   "type":"string",
                   "title":"Logid"
@@ -891,13 +1006,99 @@
             },
             "type":"object",
             "required":[
-               "feedbackId",
                "logId",
                "content",
                "modelVersion",
                "createdAt"
             ],
             "title":"AIFeedback"
+         },
+         "CalendarDay":{
+            "properties":{
+               "day":{
+                  "type":"integer",
+                  "title":"Day"
+               },
+               "logId":{
+                  "anyOf":[
+                     {
+                        "type":"string"
+                     },
+                     {
+                        "type":"null"
+                     }
+                  ],
+                  "title":"Logid"
+               },
+               "hasFeedback":{
+                  "type":"boolean",
+                  "title":"Hasfeedback",
+                  "default":false
+               }
+            },
+            "type":"object",
+            "required":[
+               "day"
+            ],
+            "title":"CalendarDay"
+         },
+         "CalendarMonth":{
+            "properties":{
+               "calendarMonthId":{
+                  "type":"string",
+                  "title":"Calendarmonthid"
+               },
+               "year":{
+                  "type":"integer",
+                  "title":"Year"
+               },
+               "month":{
+                  "type":"integer",
+                  "title":"Month"
+               },
+               "firstWeekday":{
+                  "type":"integer",
+                  "title":"Firstweekday"
+               },
+               "days":{
+                  "additionalProperties":{
+                     "$ref":"#/components/schemas/CalendarDay"
+                  },
+                  "type":"object",
+                  "title":"Days"
+               },
+               "createdAt":{
+                  "type":"string",
+                  "format":"date-time",
+                  "title":"Createdat"
+               }
+            },
+            "type":"object",
+            "required":[
+               "calendarMonthId",
+               "year",
+               "month",
+               "firstWeekday",
+               "days",
+               "createdAt"
+            ],
+            "title":"CalendarMonth"
+         },
+         "CalendarMonthsResponse":{
+            "properties":{
+               "items":{
+                  "items":{
+                     "$ref":"#/components/schemas/CalendarMonth"
+                  },
+                  "type":"array",
+                  "title":"Items"
+               }
+            },
+            "type":"object",
+            "required":[
+               "items"
+            ],
+            "title":"CalendarMonthsResponse"
          },
          "Chat":{
             "properties":{
@@ -1184,6 +1385,28 @@
             ],
             "title":"DailyLog"
          },
+         "DailyLogByIdResponse":{
+            "properties":{
+               "log":{
+                  "$ref":"#/components/schemas/DailyLog"
+               },
+               "feedback":{
+                  "anyOf":[
+                     {
+                        "$ref":"#/components/schemas/AIFeedback"
+                     },
+                     {
+                        "type":"null"
+                     }
+                  ]
+               }
+            },
+            "type":"object",
+            "required":[
+               "log"
+            ],
+            "title":"DailyLogByIdResponse"
+         },
          "DailyLogPage":{
             "properties":{
                "items":{
@@ -1307,6 +1530,11 @@
                "logId":{
                   "type":"string",
                   "title":"Logid"
+               },
+               "timezone":{
+                  "type":"string",
+                  "title":"Timezone",
+                  "default":"America/Chicago"
                }
             },
             "type":"object",
@@ -1440,6 +1668,11 @@
                "chatTokens":{
                   "type":"integer",
                   "title":"Chattokens",
+                  "default":0
+               },
+               "feedbackTokens":{
+                  "type":"integer",
+                  "title":"Feedbacktokens",
                   "default":0
                },
                "last_revenuecat_sync":{
